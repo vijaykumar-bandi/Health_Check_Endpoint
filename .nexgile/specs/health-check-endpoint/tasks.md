@@ -1,0 +1,58 @@
+# Tasks: Health Check Endpoint
+
+- [ ] 1. Project setup
+  - [ ] 1.1 Project setup
+    - Create the Node.js package at the repository root: `package.json` with the scripts `start`, `dev` and `test` from the design, `README.md` with the commands of Build and run, and a `.gitignore` that includes `.env`.
+    - Add `@playwright/test` as the only dev dependency, an `e2e/` folder holding a `.gitkeep`, and a first passing test in `test/setup.test.js` that checks the package scripts exist.
+    - _Requirements: 3.1_
+    - _Files: package.json, package-lock.json, README.md, .gitignore, e2e/.gitkeep, test/setup.test.js_
+    - _Verify: npm install_
+    - _Verify: npm test_
+    - _Area: setup_
+
+- [ ] 2. Answer GET /health
+  - [ ] 2.1 Request handler for GET /health
+    - Write `src/handler.js` exporting `handleRequest(req, res)`: parse the path with `new URL(req.url, 'http://localhost')`, answer `GET /health` with status 200, `Content-Type: application/json` and the body `{"status":"ok"}`, and write no log line, counter or timestamp.
+    - Write `src/handler.test.js` with `node:test` and `node:assert`, starting the server on port 0 and calling it with `fetch`, covering the 200 status, the body, the content type, a query string and repeated identical answers.
+    - _Requirements: 1.1, 1.2, 1.4, 1.5, 2.3_
+    - _Depends: 1.1_
+    - _Files: src/handler.js, src/handler.test.js_
+    - _Verify: npm test -- handler_
+    - _Area: api_
+  - [ ] 2.2 Answer only the health check
+    - Extend `src/handler.js` so `/health` with a method other than GET answers 405 with `Allow: GET` and an empty body, and any other path answers 404 with an empty body, checking no header, cookie or credential.
+    - Add tests to `src/handler.test.js` for the 404 on another path, the 405 on another method, and a request carrying a `Cookie` or `Authorization` header still getting 200.
+    - _Requirements: 2.1, 2.2, 2.4_
+    - _Depends: 2.1_
+    - _Files: src/handler.js, src/handler.test.js_
+    - _Verify: npm test -- handler_
+    - _Area: api_
+
+- [ ] 3. Start and stop on the local machine
+  - [ ] 3.1 Server module with start and stop
+    - Write `src/server.js` exporting `start(port)` and `stop(server)`: create the server with `handleRequest`, listen on the port, resolve once listening, print `Port <port> is already in use` to stderr and exit with code 1 on `EADDRINUSE`, and close the server in `stop`.
+    - Write `src/server.test.js` starting the server on port 0, checking the answer arrives within 1 second, that `stop` frees the port, and that starting twice on the same port exits with code 1 and a message naming the port.
+    - _Requirements: 1.3, 3.2, 3.3_
+    - _Depends: 2.1_
+    - _Files: src/server.js, src/server.test.js_
+    - _Verify: npm test -- server_
+    - _Area: api_
+  - [ ] 3.2 Entry point reading PORT
+    - Write `server.js` at the root: read `process.env.PORT`, exit with code 1 and a message naming `PORT` when it is unset or not a number, otherwise call `start(port)` and print `Listening on port <port>`, and handle `SIGINT` and `SIGTERM` by calling `stop` and exiting with code 0.
+    - Write `server.test.js` spawning `node server.js` with `PORT` set to a free port, waiting for the listening line, calling `GET /health`, sending `SIGINT` and checking the exit code is 0, and spawning it with `PORT` unset and checking the exit code is 1.
+    - _Requirements: 3.1, 3.3_
+    - _Depends: 3.1_
+    - _Files: server.js, server.test.js_
+    - _Verify: npm test -- server.test_
+    - _Area: api_
+
+- [ ]* 4. Property tests for P1–P6
+  - [ ]* 4.1 Property tests for P1–P6
+    - Write `test/properties.test.js` with `node:test`, generating request sequences and header sets for P1–P3, timing requests for P4, and starting and stopping the app on free ports for P5 and P6.
+    - _Properties: P1, P2, P3, P4, P5, P6_
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.4, 3.1, 3.2, 3.3_
+    - _Depends: 3.1, 3.2_
+    - _Files: test/properties.test.js_
+    - _Verify: npm test -- properties_
+    - _Mode: testgen_
+    - _Area: api_
